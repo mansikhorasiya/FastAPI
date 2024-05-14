@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from typing import Union
 from enum import Enum
 from pydantic import BaseModel
-from fastapi import Query, Form
+from fastapi import Query, Form , File, UploadFile, HTTPException
 
 
 app = FastAPI()
@@ -60,3 +60,43 @@ async def form_data(items: mansi):
 
     return({"items":items})
 
+# file upload
+@app.post("/file/upload")
+async def file_bytes_len(file: bytes = File()):
+    return ({'file':len(file)})
+
+@app.post("/upload/file")
+async def file_upload(file: UploadFile):
+    # return ({'file':file})
+    return({"file_name": file.filename, "file_content_name": file.content_type})
+
+@app.post("/formdata/uploadfile")
+async def formdatauploadfile(file1: UploadFile,file2 :bytes = File(), name: str = Form()):
+    return({"file_name": file1.filename, "file2_bytes": len(file2),"name": name})
+
+
+items = [1,2,3,4,5]
+
+# error handling
+@app.get("/error/handling")
+async def handle_error(item: int):
+    if item not in items:
+        return HTTPException(status_code= 400, detail="Item is not eqal to 2 try another value!!!")
+    return {"value": item}
+
+class Item(BaseModel):
+    name: str
+    description: Union[str, None] = None
+    price: float
+    tax: Union[float, None] = None
+
+#  Declare request example data.
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "Foo",
+                "description": "A very nice Item",
+                "price": 35.4,
+                "tax": 3.2,
+            }
+        }
